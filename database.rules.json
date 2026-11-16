@@ -11,7 +11,7 @@
     "claims": {
       "$room": {
         ".read": "auth != null && auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' && auth.token.firebase.sign_in_provider === 'google.com'",
-        ".write": "auth != null && ((auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' && auth.token.firebase.sign_in_provider === 'google.com') || (auth.token.firebase.sign_in_provider === 'anonymous' && !data.exists() && newData.exists() && root.child('remix').child($room).child('open').val() === true && root.child('remix').child($room).child('winnerBuzz').val() === null))",
+        ".write": "auth != null && ((auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' && auth.token.firebase.sign_in_provider === 'google.com') || (auth.token.firebase.sign_in_provider === 'anonymous' && !data.exists() && newData.exists() && root.child('remix').child($room).child('open').val() === true && root.child('teams').child($room).child(newData.child('team').val()+'').val() === auth.uid && root.child('remix').child($room).child('winnerBuzz').val() === null))",
         ".validate": "newData.hasChildren(['uid','team']) && newData.child('uid').isString() && newData.child('team').isNumber() && (newData.child('team').val() === 0 || newData.child('team').val() === 1 || newData.child('team').val() === 2 || newData.child('team').val() === 3) && (auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' || newData.child('uid').val() === auth.uid)",
         "uid": {
           ".validate": "newData.isString()"
@@ -21,6 +21,16 @@
         },
         "$other": {
           ".validate": false
+        }
+      }
+    },
+    "teams": {
+      "$room": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' && auth.token.firebase.sign_in_provider === 'google.com'",
+        "$team": {
+          ".write": "auth != null && auth.token.firebase.sign_in_provider === 'anonymous' && ($team === '0' || $team === '1' || $team === '2' || $team === '3') && !data.exists() && newData.isString() && newData.val() === auth.uid && !root.child('teams').child($room).child('0').val() !== auth.uid && !root.child('teams').child($room).child('1').val() !== auth.uid && !root.child('teams').child($room).child('2').val() !== auth.uid && !root.child('teams').child($room).child('3').val() !== auth.uid",
+          ".validate": "newData.isString()"
         }
       }
     }
