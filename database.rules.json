@@ -29,7 +29,7 @@
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' && auth.token.firebase.sign_in_provider === 'google.com'",
         "$team": {
-          ".write": "auth != null && auth.token.firebase.sign_in_provider === 'anonymous' && ($team === '0' || $team === '1' || $team === '2' || $team === '3') && !data.exists() && newData.isString() && newData.val() === auth.uid && !root.child('teams').child($room).child('0').val() !== auth.uid && !root.child('teams').child($room).child('1').val() !== auth.uid && !root.child('teams').child($room).child('2').val() !== auth.uid && !root.child('teams').child($room).child('3').val() !== auth.uid",
+          ".write": "auth != null && auth.token.firebase.sign_in_provider === 'anonymous' && ($team === '0' || $team === '1' || $team === '2' || $team === '3') && !data.exists() && newData.isString() && newData.val() === auth.uid && root.child('teams').child($room).child('0').val() !== auth.uid && root.child('teams').child($room).child('1').val() !== auth.uid && root.child('teams').child($room).child('2').val() !== auth.uid && root.child('teams').child($room).child('3').val() !== auth.uid",
           ".validate": "newData.isString()"
         }
       }
