@@ -1,0 +1,28 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "remix": {
+      "$room": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' && auth.token.firebase.sign_in_provider === 'google.com'"
+      }
+    },
+    "claims": {
+      "$room": {
+        ".read": "auth != null && auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' && auth.token.firebase.sign_in_provider === 'google.com'",
+        ".write": "auth != null && ((auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' && auth.token.firebase.sign_in_provider === 'google.com') || (auth.token.firebase.sign_in_provider === 'anonymous' && !data.exists() && newData.exists() && root.child('remix').child($room).child('open').val() === true && root.child('remix').child($room).child('winnerBuzz').val() === null))",
+        ".validate": "newData.hasChildren(['uid','team']) && newData.child('uid').isString() && newData.child('team').isNumber() && newData.child('team').val() >= 0 && newData.child('team').val() <= 3 && (auth.uid === 'bpJjQCI2yvZ0Y5sjkSMocqOlQxy2' || newData.child('uid').val() === auth.uid)",
+        "uid": {
+          ".validate": "newData.isString()"
+        },
+        "team": {
+          ".validate": "newData.isNumber()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}
