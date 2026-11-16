@@ -110,6 +110,23 @@ function playBuzzer(){
     osc.start(now+delay);osc.stop(now+delay+.19);
   });
 }
+function playTimeoutSound(){
+ if(!soundEnabled||!audioCtx)return;
+ audioCtx.resume();
+ const now=audioCtx.currentTime,volume=Number($('buzzVolume')?.value??85)/100;
+ const compressor=audioCtx.createDynamicsCompressor();
+ compressor.threshold.value=-17;compressor.ratio.value=8;compressor.connect(audioCtx.destination);
+ [0,.18].forEach(delay=>{
+  const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+  osc.type='sawtooth';osc.frequency.setValueAtTime(340,now+delay);
+  osc.frequency.exponentialRampToValueAtTime(175,now+delay+.38);
+  gain.gain.setValueAtTime(.0001,now+delay);
+  gain.gain.linearRampToValueAtTime(Math.max(.0001,volume*.32),now+delay+.025);
+  gain.gain.setValueAtTime(Math.max(.0001,volume*.32),now+delay+.27);
+  gain.gain.exponentialRampToValueAtTime(.0001,now+delay+.43);
+  osc.connect(gain);gain.connect(compressor);osc.start(now+delay);osc.stop(now+delay+.45);
+ });
+}
 function playAnswerSound(correct){
   unlockSound();if(!audioCtx)return;
   const now=audioCtx.currentTime,volume=Number($('buzzVolume')?.value??65)/100;
@@ -138,6 +155,7 @@ function checkRemoteSound(){
  if(event.kind==='correct')playAnswerSound(true);
  else if(event.kind==='wrong')playAnswerSound(false);
  else if(event.kind==='test')playBuzzer();
+ else if(event.kind==='timeout')playTimeoutSound();
 }
 async function sendRemoteSound(kind){
  if(!isHost())return;
@@ -258,7 +276,7 @@ $('countdownBuzz').onclick=async()=>{
 };$('closeBuzz').onclick=()=>{if(countdownHandle){clearInterval(countdownHandle);countdownHandle=null}update(s=>{s.open=false;s.countdownUntil=0})};$('resetBuzz').onclick=async()=>{if(countdownHandle){clearInterval(countdownHandle);countdownHandle=null}await update(s=>{s.winnerBuzz=null;s.open=false;s.countdownUntil=0});try{await clearClaim()}catch(e){$('connError').textContent=e.message}};$('revealSong').onclick=()=>update(s=>{s.shownSong=!s.shownSong});$('revealTheme').onclick=()=>update(s=>{s.shownTheme=!s.shownTheme});$('finale').onclick=()=>update(s=>{s.champion=!s.champion;s.open=false});
 $('buzzButton').onclick=()=>submitBuzz(claimedTeam);$('claimTeam').onclick=claimSelectedTeam;$('resetTeams').onclick=resetTeamRegistration;
 document.querySelectorAll('[data-points]').forEach(b=>b.onclick=()=>award(Number(b.dataset.points)));function award(pts){let t=Number($('awardTeam').value);update(s=>{s.history=s.history||[];s.history.push({team:t,previous:s.scores[t]||0});s.scores[t]=(s.scores[t]||0)+pts})}$('addCustom').onclick=()=>award(Number($('customPoints').value)||0);$('undo').onclick=()=>update(s=>{let h=(s.history||[]).pop();if(!h)return false;s.scores[h.team]=h.previous});$('resetGame').onclick=()=>{if(confirm('Reset scores and progress? Your edited songs will be kept.'))save({...fresh(),playlist:JSON.parse(JSON.stringify(activeRounds()))})};$('newRoom').onclick=()=>{if(!isHost())return;lastBuzzSignature=null;soundInitialized=false;room=Math.random().toString(36).slice(2,8).toUpperCase();history.replaceState(null,'',location.pathname+'?room='+room);save({...fresh(),playlist:JSON.parse(JSON.stringify(activeRounds()))})};$('showCaptainQR').onclick=showCaptainQR;$('closeCaptainQR').onclick=hideCaptainQR;$('projectQR').onclick=()=>{hideCaptainQR();showProjectorQR();showView('screen')};$('hideScreenQR').onclick=hideProjectorQR;$('copyQRLink').onclick=async()=>{try{await navigator.clipboard.writeText(captainJoinUrl());alert('Captain link copied!')}catch(e){alert(captainJoinUrl())}};document.addEventListener('keydown',e=>{if(e.key==='Escape')hideCaptainQR()});$('copyLink').onclick=async()=>{try{await navigator.clipboard.writeText($('captainLink').value);alert('Captain link copied!')}catch(e){$('captainLink').select();alert('Copy the highlighted captain link.')}};
-$('correctSound').onclick=()=>sendRemoteSound('correct');$('wrongSound').onclick=()=>sendRemoteSound('wrong');$('enableSound').onclick=unlockSound;$('projectorSound').onclick=()=>{unlockSound();$('projectorSoundStatus').textContent='✓ Projector audio enabled';$('projectorSound').textContent='🔊 Projector Audio Enabled'};$('testSound').onclick=()=>sendRemoteSound('test');$('startTimer').onclick=()=>{clearInterval(timerHandle);answerSeconds=5;$('timer').textContent='5';timerHandle=setInterval(()=>{answerSeconds--;$('timer').textContent=answerSeconds>0?answerSeconds:'TIME!';if(answerSeconds<=0)clearInterval(timerHandle)},1000)};
+$('correctSound').onclick=()=>sendRemoteSound('correct');$('wrongSound').onclick=()=>sendRemoteSound('wrong');$('enableSound').onclick=unlockSound;$('projectorSound').onclick=()=>{unlockSound();$('projectorSoundStatus').textContent='✓ Projector audio enabled';$('projectorSound').textContent='🔊 Projector Audio Enabled'};$('testSound').onclick=()=>sendRemoteSound('test');$('startTimer').onclick=()=>{clearInterval(timerHandle);answerSeconds=5;$('timer').textContent='5';timerHandle=setInterval(()=>{answerSeconds--;$('timer').textContent=answerSeconds>0?answerSeconds:'TIME!';if(answerSeconds<=0){clearInterval(timerHandle);sendRemoteSound('timeout').catch(e=>console.error('Time-up sound could not be sent',e))}},1000)};
 
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{if(!captainOnly)showView(b.dataset.view)});fillSelect('awardTeam',TEAMS);renderTeamChoices();$('captainTeam').onchange=render;$('songEditor').addEventListener('toggle',()=>{if($('songEditor').open)buildEditor()});showView(['host','screen','captain'].includes(view)?view:'host');setInterval(()=>{if(isLive()&&firebaseAuth?.currentUser)sync()},750);setInterval(()=>{if(state.countdownUntil&&!state.open)render()},180);
 
